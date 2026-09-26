@@ -48,11 +48,24 @@ async def background_loop():
                 if history and history[-1].get("pred"):
                     stats["total"] += 1
                     prev_pred = history[-1]["pred"]
+                    prev_reason = (history[-1].get("reason") or "").lower()
                     if prev_pred == outcome:
                         stats["correct"] += 1
                     else:
                         stats["wrong"] += 1
                     record_feedback(history, outcome)
+                    try:
+                        from core.ensemble import note_module
+
+                        correct = prev_pred == outcome
+                        if "deepseek" in prev_reason:
+                            note_module("deepseek", correct)
+                        if "hybrid" in prev_reason:
+                            note_module("hybrid", correct)
+                        if "soicau" in prev_reason or "soi cau" in prev_reason:
+                            note_module("soiCau", correct)
+                    except Exception:
+                        pass
 
                 history.append({
                     "sessionId": sid,
@@ -82,6 +95,17 @@ async def background_loop():
                     "stats": stats,
                     "last_session": last_session,
                 })
+
+                if stats.get("total", 0) >= 80 and stats["total"] % 80 == 0:
+                    try:
+                        from brain.self_code_evolution import SelfCodeEvolution
+                        from core.ensemble import get_module_stats
+
+                        evo = SelfCodeEvolution()
+                        result = evo.run_once(history, get_module_stats())
+                        print("[EVO]", result.get("status"))
+                    except Exception as e:
+                        print("[EVO] error:", e)
 
                 bstats = brain.stats()
                 ver = bstats.get("version", 0)

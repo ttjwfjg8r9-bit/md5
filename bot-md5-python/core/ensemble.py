@@ -2,6 +2,25 @@ from typing import List, Dict, Any
 
 from brain import Brain
 
+_module_stats = {
+    "deepseek": {"hits": 0, "misses": 0},
+    "hybrid": {"hits": 0, "misses": 0},
+    "soiCau": {"hits": 0, "misses": 0},
+}
+
+
+def note_module(name, correct):
+    if name not in _module_stats:
+        return
+    if correct:
+        _module_stats[name]["hits"] += 1
+    else:
+        _module_stats[name]["misses"] += 1
+
+
+def get_module_stats():
+    return _module_stats
+
 try:
     from modules.deepseek import analyze as deepseek_analyze
 except Exception:
