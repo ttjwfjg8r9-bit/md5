@@ -1,0 +1,11 @@
+{
+  "patterns": {
+    "TAI|TAI|XIU|TAI|XIU|TAI|XIU": {
+      "TAI": 20,
+      "XIU": 20,
+      "samples": 40
+    }
+  },
+  "algorithms": {},
+  "history": []
+}
