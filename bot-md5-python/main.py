@@ -103,7 +103,7 @@ async def background_loop():
 
                         evo = SelfCodeEvolution()
                         result = evo.run_once(history, get_module_stats())
-                        print("[EVO]", result.get("status"))
+                        print("[EVO]", result.get("status"), result.get("reason", ""))
                     except Exception as e:
                         print("[EVO] error:", e)
 

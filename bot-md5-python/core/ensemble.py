@@ -140,3 +140,13 @@ def ensemble_predict(history):
 def record_feedback(history, actual):
     outs = _outcomes(history)
     brain.learn(outs, actual)
+
+    if history and history[-1].get("reason"):
+        reason = (history[-1].get("reason") or "").lower()
+        correct = history[-1].get("pred") == actual
+        if "deepseek" in reason:
+            note_module("deepseek", correct)
+        if "hybrid" in reason:
+            note_module("hybrid", correct)
+        if "soicau" in reason or "soi cau" in reason:
+            note_module("soiCau", correct)
