@@ -138,11 +138,17 @@ def ensemble_predict(history):
 
 
 def record_feedback(history, actual):
+    if not history or not history[-1].get("pred"):
+        return
+
+    reason = (history[-1].get("reason") or "").lower()
+    if "warmup" in reason or "fallback" in reason:
+        return
+
     outs = _outcomes(history)
     brain.learn(outs, actual)
 
-    if history and history[-1].get("reason"):
-        reason = (history[-1].get("reason") or "").lower()
+    if history[-1].get("reason"):
         correct = history[-1].get("pred") == actual
         if "deepseek" in reason:
             note_module("deepseek", correct)

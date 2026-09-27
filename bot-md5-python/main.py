@@ -46,26 +46,15 @@ async def background_loop():
                 pred_result = ensemble_predict(history)
 
                 if history and history[-1].get("pred"):
-                    stats["total"] += 1
-                    prev_pred = history[-1]["pred"]
                     prev_reason = (history[-1].get("reason") or "").lower()
-                    if prev_pred == outcome:
-                        stats["correct"] += 1
-                    else:
-                        stats["wrong"] += 1
-                    record_feedback(history, outcome)
-                    try:
-                        from core.ensemble import note_module
-
-                        correct = prev_pred == outcome
-                        if "deepseek" in prev_reason:
-                            note_module("deepseek", correct)
-                        if "hybrid" in prev_reason:
-                            note_module("hybrid", correct)
-                        if "soicau" in prev_reason or "soi cau" in prev_reason:
-                            note_module("soiCau", correct)
-                    except Exception:
-                        pass
+                    if "warmup" not in prev_reason and "fallback" not in prev_reason:
+                        stats["total"] += 1
+                        prev_pred = history[-1]["pred"]
+                        if prev_pred == outcome:
+                            stats["correct"] += 1
+                        else:
+                            stats["wrong"] += 1
+                        record_feedback(history, outcome)
 
                 history.append({
                     "sessionId": sid,
