@@ -103,7 +103,7 @@ async def background_loop():
 
                         evo = SelfCodeEvolution()
                         result = evo.run_once(history, get_module_stats())
-                        print("[EVO]", result.get("status"), result.get("reason", ""))
+                        print("[EVO]", result.get("status"))
                     except Exception as e:
                         print("[EVO] error:", e)
 
@@ -164,6 +164,13 @@ def status():
 @app.get("/api/bot/brain")
 def brain_info():
     return brain.stats()
+
+
+@app.post("/api/bot/evolve")
+def force_evolve():
+    from brain.self_code_evolution import SelfCodeEvolution
+    from core.ensemble import get_module_stats
+    return SelfCodeEvolution().run_once(history, get_module_stats())
 
 
 if __name__ == "__main__":
