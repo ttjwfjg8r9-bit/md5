@@ -5,6 +5,7 @@ from .self_code_evolution import SelfCodeEvolution
 from .self_code_evolution_deep import DeepSelfCodeEvolution
 from .test_engine import TestEngine
 from .git_manager import GitManager
+from .evolution_manager import EvolutionManager
 
 __all__ = [
     "Brain",
@@ -14,4 +15,5 @@ __all__ = [
     "DeepSelfCodeEvolution",
     "TestEngine",
     "GitManager",
+    "EvolutionManager",
 ]

@@ -157,6 +157,21 @@ def brain_info():
     return brain.stats()
 
 
+@app.get("/api/bot/evolution")
+def evolution_info():
+    from brain.evolution_manager import EvolutionManager
+    manager = EvolutionManager()
+    recent = manager.get_meta_learning(limit=10)
+    lessons = manager.get_recent_lessons(limit=10)
+    return {
+        "daily_limit": 5,
+        "current_day_events": manager.data.get("daily", {}).get(datetime.now(timezone.utc).strftime("%Y-%m-%d"), 0),
+        "meta_learning": recent,
+        "recent_lessons": lessons,
+        "can_evolve": manager.can_evolve(),
+    }
+
+
 @app.post("/api/bot/evolve")
 def force_evolve():
     from brain.self_code_evolution_deep import DeepSelfCodeEvolution
