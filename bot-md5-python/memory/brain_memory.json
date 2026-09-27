@@ -1,9 +1,9 @@
 {
   "patterns": {
     "TAI|TAI|XIU|TAI|XIU|TAI|XIU": {
-      "TAI": 40,
-      "XIU": 40,
-      "samples": 80
+      "TAI": 80,
+      "XIU": 80,
+      "samples": 160
     }
   },
   "algorithms": {},
