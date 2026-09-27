@@ -47,7 +47,9 @@ async def background_loop():
 
                 if history and history[-1].get("pred"):
                     prev_reason = (history[-1].get("reason") or "").lower()
-                    if "warmup" not in prev_reason and "fallback" not in prev_reason:
+                    prev_conf = int(history[-1].get("confidence") or 0)
+                    prev_active = int(history[-1].get("active") or 0)
+                    if "warmup" not in prev_reason and "fallback" not in prev_reason and prev_conf >= 55 and prev_active >= 2:
                         stats["total"] += 1
                         prev_pred = history[-1]["pred"]
                         if prev_pred == outcome:

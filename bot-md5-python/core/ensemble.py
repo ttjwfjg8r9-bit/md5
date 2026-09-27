@@ -8,6 +8,9 @@ _module_stats = {
     "soiCau": {"hits": 0, "misses": 0},
 }
 
+MIN_ACCEPT_CONFIDENCE = 55
+MIN_ACTIVE_MODULES = 2
+
 
 def note_module(name, correct):
     if name not in _module_stats:
@@ -116,8 +119,8 @@ def ensemble_predict(history):
             pred = "XIU" if outs[-1] == "TAI" else "TAI"
         return {
             "pred": pred,
-            "confidence": 52,
-            "reason": "Fallback",
+            "confidence": 50,
+            "reason": "RANDOM_BALANCED_FALLBACK",
             "active": 0,
             "signals": [],
         }
@@ -126,10 +129,17 @@ def ensemble_predict(history):
     diff = abs(scores["TAI"] - scores["XIU"])
     conf = min(50 + diff * 6 + active * 2.5, 90)
 
+    if active < MIN_ACTIVE_MODULES and conf < MIN_ACCEPT_CONFIDENCE:
+        pred = "TAI" if len(outs) % 2 == 0 else "XIU"
+        conf = 52
+        reason = "RANDOM_BALANCED_FALLBACK"
+    else:
+        reason = " | ".join(reasons[:3]) + f" | {active} modules"
+
     return {
         "pred": pred,
         "confidence": round(conf),
-        "reason": " | ".join(reasons[:3]) + f" | {active} modules",
+        "reason": reason,
         "active": active,
         "scores": scores,
         "signals": signals,
@@ -142,7 +152,12 @@ def record_feedback(history, actual):
         return
 
     reason = (history[-1].get("reason") or "").lower()
+    confidence = int(history[-1].get("confidence") or 0)
+    active = int(history[-1].get("active") or 0)
+
     if "warmup" in reason or "fallback" in reason:
+        return
+    if confidence < MIN_ACCEPT_CONFIDENCE or active < MIN_ACTIVE_MODULES:
         return
 
     outs = _outcomes(history)

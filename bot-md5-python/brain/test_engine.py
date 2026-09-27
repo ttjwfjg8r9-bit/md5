@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class TestEngine:
+    __test__ = False
     """Realtime validation layer: syntax, import, backtest, walk-forward, shadow checks."""
 
     def __init__(self):

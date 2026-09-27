@@ -60,3 +60,13 @@ class EvolutionManager:
             for lesson in item.get("lessons", []):
                 lessons.append(lesson)
         return lessons
+
+    def should_retry(self, change_name: str, max_repeat: int = 2) -> bool:
+        history = self.data.get("history", [])
+        count = 0
+        for item in reversed(history):
+            if item.get("change") == change_name:
+                count += 1
+                if count >= max_repeat:
+                    return False
+        return True
