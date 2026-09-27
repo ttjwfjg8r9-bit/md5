@@ -3,8 +3,9 @@ from typing import Dict, List, Any
 import ast
 
 ROOT = Path(__file__).resolve().parent.parent
-SAFE = [ROOT / "modules", ROOT / "brain", ROOT / "generated_algorithms"]
-IMMUTABLE_NAMES = {".env", "secrets", "credentials", "token", "password"}
+SAFE = [ROOT / "modules", ROOT / "brain", ROOT / "generated_algorithms", ROOT / "learning", ROOT / "strategy", ROOT / "scoring"]
+CONTROLLED = [ROOT / "config", ROOT / "server.py", ROOT / "index.js"]
+IMMUTABLE_NAMES = {".env", "secrets", "credentials", "token", "password", "auth", "railway"}
 
 
 class CodeAnalyzer:
@@ -25,15 +26,42 @@ class CodeAnalyzer:
             tree = ast.parse(src)
             funcs = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
             classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+            imports = [n.names[0].name for n in ast.walk(tree) if isinstance(n, ast.Import)]
+            complexity = len(list(ast.walk(tree)))
             return {
                 "path": str(path),
                 "funcs": funcs,
                 "classes": classes,
+                "imports": imports,
                 "lines": len(src.splitlines()),
+                "complexity": complexity,
                 "ok": True,
             }
         except Exception as e:
             return {"path": str(path), "ok": False, "error": str(e)}
+
+    def classify_target(self, path: Path) -> str:
+        rel = str(path.relative_to(ROOT)) if path.is_absolute() else str(path)
+        if rel.startswith("modules/") or rel.startswith("brain/") or rel.startswith("generated_algorithms/"):
+            return "SAFE_TO_EDIT"
+        if rel.startswith("config/") or rel.endswith("server.py") or rel.endswith("index.js"):
+            return "CONTROLLED"
+        if any(token in rel.lower() for token in (".env", "token", "secret", "credential", "auth", "railway")):
+            return "IMMUTABLE"
+        return "SAFE_TO_EDIT"
+
+    def analyze_module(self, path: Path) -> Dict[str, Any]:
+        parsed = self.parse_file(path)
+        if not parsed.get("ok"):
+            return parsed
+        return {
+            **parsed,
+            "allowlist": self.classify_target(path),
+            "api_surface": {
+                "funcs": parsed.get("funcs", []),
+                "classes": parsed.get("classes", []),
+            },
+        }
 
     def find_weakness(self, module_stats: Dict[str, Dict]) -> List[Dict]:
         weak = []
