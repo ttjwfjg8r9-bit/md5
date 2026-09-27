@@ -1,0 +1,20 @@
+{
+  "events": [],
+  "daily": {},
+  "history": [],
+  "meta_learning": [
+    {
+      "category": "shadow",
+      "result": "shadow_rejected",
+      "metrics": {
+        "stage": "walk_forward",
+        "mean_accuracy": 0.41
+      },
+      "lessons": [
+        "skip weak candidates",
+        "keep real-signal only"
+      ],
+      "time": 1790521706.480212
+    }
+  ]
+}

@@ -11,7 +11,7 @@ MAX_ROLLBACKS = 5
 
 class EvolutionManager:
     def __init__(self):
-        self.data = {"events": [], "daily": {}, "history": []}
+        self.data = {"events": [], "daily": {}, "history": [], "meta_learning": []}
         self.load()
 
     def load(self):
@@ -60,6 +60,25 @@ class EvolutionManager:
             for lesson in item.get("lessons", []):
                 lessons.append(lesson)
         return lessons
+
+    def record_meta_learning(self, category: str, result: str, metrics: dict, lessons: list):
+        if not isinstance(lessons, list):
+            lessons = [str(lessons)]
+        entry = {
+            "category": category,
+            "result": result,
+            "metrics": metrics or {},
+            "lessons": lessons,
+            "time": time.time(),
+        }
+        existing = self.data.setdefault("meta_learning", [])
+        existing.append(entry)
+        self.data["meta_learning"] = existing[-200:]
+        self.save()
+
+    def get_meta_learning(self, limit: int = 10):
+        entries = self.data.get("meta_learning", [])
+        return list(reversed(entries[-limit:]))
 
     def should_retry(self, change_name: str, max_repeat: int = 2) -> bool:
         history = self.data.get("history", [])

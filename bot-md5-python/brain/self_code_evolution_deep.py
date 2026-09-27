@@ -12,6 +12,7 @@ from .code_generator_deep import generate_analyze_from_rule
 from .patch_engine import PatchEngine
 from .regression_tester import backtest_analyze, walk_forward
 from .evolution_manager import EvolutionManager
+from .test_engine import TestEngine
 
 ROOT = Path(__file__).resolve().parent.parent
 GEN_DIR = ROOT / "generated_algorithms"
@@ -28,6 +29,7 @@ class DeepSelfCodeEvolution:
     def __init__(self):
         self.patch = PatchEngine()
         self.manager = EvolutionManager()
+        self.test_engine = TestEngine()
 
     def _load_fn(self, code: str):
         spec = importlib.util.spec_from_loader("deep_evo_tmp", loader=None)
@@ -66,16 +68,46 @@ class DeepSelfCodeEvolution:
         log["steps"].append({"BACKTEST": bt})
         if not bt.get("ok") or not bt.get("pass"):
             self.manager.record({"result": "rejected", "stage": "backtest", "cand": best["name"]})
+            self.manager.record_meta_learning(
+                "shadow",
+                "rejected_backtest",
+                {"stage": "backtest", "accuracy": bt.get("accuracy")},
+                ["skip weak candidates", "keep only strong backtests"],
+            )
             return {"status": "rejected_backtest", "log": log, "bt": bt}
 
         wf = walk_forward(fn, history)
         log["steps"].append({"WALK_FORWARD": wf})
         if not wf.get("ok"):
             self.manager.record({"result": "rejected", "stage": "walk_forward", "cand": best["name"]})
+            self.manager.record_meta_learning(
+                "shadow",
+                "rejected_walk_forward",
+                {"stage": "walk_forward", "mean_accuracy": wf.get("mean_accuracy")},
+                ["skip weak candidates", "keep real-signal only"],
+            )
             return {"status": "rejected_walk_forward", "log": log, "wf": wf}
         if wf.get("mean_accuracy", 0) < 0.45:
             self.manager.record({"result": "rejected", "stage": "walk_forward_low", "cand": best["name"]})
+            self.manager.record_meta_learning(
+                "shadow",
+                "rejected_walk_forward_low",
+                {"stage": "walk_forward_low", "mean_accuracy": wf.get("mean_accuracy")},
+                ["skip weak candidates", "require real improvement above threshold"],
+            )
             return {"status": "rejected_walk_forward", "log": log, "wf": wf}
+
+        shadow = self.test_engine.shadow_run(code, history)
+        log["steps"].append({"SHADOW": shadow})
+        if not shadow.get("ok"):
+            self.manager.record({"result": "rejected", "stage": "shadow", "cand": best["name"]})
+            self.manager.record_meta_learning(
+                "shadow",
+                "shadow_rejected",
+                {"stage": "shadow", "details": shadow},
+                ["keep real-signal checks", "reject regressive shadow runs"],
+            )
+            return {"status": "rejected_shadow", "log": log, "shadow": shadow}
 
         path = GEN_DIR / f"algo_{best['name']}.py"
         path.write_text(code, encoding="utf-8")
@@ -109,6 +141,12 @@ class DeepSelfCodeEvolution:
             "backtest": bt,
             "walk_forward": wf,
         })
+        self.manager.record_meta_learning(
+            "shadow",
+            "accepted",
+            {"stage": "shadow_pass", "mean_accuracy": wf.get("mean_accuracy")},
+            ["shadow validation passed", "preserve real-signal learning"],
+        )
         status = "applied" if (applied and applied.get("ok")) else "saved_generated"
         print(f"[DEEP-EVO] {status} {best['name']}")
         return {"status": status, "log": log, "best": best, "applied": applied}
