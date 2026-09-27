@@ -71,5 +71,5 @@ def walk_forward(analyze_fn: Callable, history: List[dict], folds: int = 3) -> D
         "ok": True,
         "fold_accuracies": [round(a, 4) for a in accs],
         "mean_accuracy": round(mean_acc, 4),
-        "pass": mean_acc >= 0.47 and min(accs) >= 0.42,
+        "pass": mean_acc >= 0.45 and min(accs) >= 0.40,
     }

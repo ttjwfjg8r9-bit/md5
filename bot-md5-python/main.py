@@ -96,16 +96,16 @@ async def background_loop():
                     "last_session": last_session,
                 })
 
-                if stats.get("total", 0) >= 80 and stats["total"] % 80 == 0:
+                if stats.get("total", 0) >= 60 and stats["total"] % 60 == 0:
                     try:
-                        from brain.self_code_evolution import SelfCodeEvolution
+                        from brain.self_code_evolution_deep import DeepSelfCodeEvolution
                         from core.ensemble import get_module_stats
 
-                        evo = SelfCodeEvolution()
+                        evo = DeepSelfCodeEvolution()
                         result = evo.run_once(history, get_module_stats())
-                        print("[EVO]", result.get("status"))
+                        print("[DEEP-EVO]", result.get("status"))
                     except Exception as e:
-                        print("[EVO] error:", e)
+                        print("[DEEP-EVO] error:", e)
 
                 bstats = brain.stats()
                 ver = bstats.get("version", 0)
@@ -168,9 +168,9 @@ def brain_info():
 
 @app.post("/api/bot/evolve")
 def force_evolve():
-    from brain.self_code_evolution import SelfCodeEvolution
+    from brain.self_code_evolution_deep import DeepSelfCodeEvolution
     from core.ensemble import get_module_stats
-    return SelfCodeEvolution().run_once(history, get_module_stats())
+    return DeepSelfCodeEvolution().run_once(history, get_module_stats())
 
 
 if __name__ == "__main__":
